@@ -263,7 +263,7 @@ function route(){const h=(location.hash||'#home').slice(1);const id=['home','nai
  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('on',p.id==id));
  document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.getAttribute('href')=='#'+id));scrollTo(0,0)}
 
-const SB_URL='',SB_KEY='',W3_KEY='';
+const SB_URL='https://ckmayukmgutslrgpxgkl.supabase.co',SB_KEY='sb_publishable_yc6-s1GioMD69mm8xcEeDA_3qgNjXAM',W3_KEY='64173a17-dcf6-4135-9a08-9a1ada7f3400';
 let sbc=null,disc={pct:0,code:''};
 let SHIP={flat:5.99,free:0};
 const shipFor=s=>SHIP.free&&s>=SHIP.free?0:SHIP.flat;
