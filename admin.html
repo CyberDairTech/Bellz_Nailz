@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bellz Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{--bg:#fbeee9;--card:#fff8f4;--pink:#f8e1e3;--pink-d:#f0c8ce;--brown:#4a2e24;--apricot:#e8b48c;--muted:#7d5f52}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--brown);font:700 17px/1.5 Nunito,system-ui,sans-serif}
+h1,h2{font-family:'Young Serif',Georgia,serif;font-weight:400;margin:.2em 0}
+.wrap{max-width:900px;margin:0 auto;padding:1rem}
+.box{background:var(--card);border:3px solid var(--pink-d);border-radius:24px;padding:1.2rem;margin:.8rem 0}
+input,select,textarea{width:100%;padding:.7rem;border:2px solid var(--pink-d);border-radius:14px;font:inherit;background:#fff;color:var(--brown);margin:.25rem 0 .8rem}
+input[type=color]{height:3rem;padding:.2rem}input[type=checkbox]{width:auto}
+label{display:block;font-size:.95rem}
+button{font:800 1rem Nunito,sans-serif;border:0;border-radius:99px;padding:.7rem 1.3rem;background:var(--brown);color:#fff;cursor:pointer}
+button.soft{background:var(--pink-d);color:var(--brown)}button.red{background:#c4575f}button.big{padding:1rem 1.6rem;font-size:1.1rem}
+button.on{background:#5a9a6b}
+nav{display:flex;gap:.5rem;flex-wrap:wrap;margin:.8rem 0}nav button{background:var(--pink-d);color:var(--brown)}nav button.cur{background:var(--brown);color:#fff}
+.row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+.item{display:flex;gap:1rem;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.thumb{width:72px;height:72px;border-radius:14px;object-fit:cover;background:var(--pink)}
+.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.8rem}.g div{position:relative}.g img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:16px}
+.g button{position:absolute;right:6px;top:6px;padding:.3rem .7rem}
+.muted{color:var(--muted);font-weight:600;font-size:.9rem}
+dialog{border:3px solid var(--pink-d);border-radius:24px;background:var(--bg);color:var(--brown);width:min(520px,94vw);padding:1.4rem}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--brown);color:#fff;padding:.8rem 1.4rem;border-radius:99px;display:none;z-index:9}
+.badge{background:#c4575f;color:#fff;border-radius:99px;padding:0 .5rem;margin-left:.3rem;font-size:.8rem}
+</style></head><body><div class="wrap">
+<div id="login" class="box" style="max-width:420px;margin:12vh auto"><h1>Bellz Admin 💅</h1><p class="muted">Hi Isabella! Log in to manage your shop.</p>
+<label>Username<input id="u" autocomplete="username" autocapitalize="none"></label>
+<label>Password<input id="p" type="password" autocomplete="current-password"></label>
+<button class="big" onclick="login()">Log in</button><p id="err" style="color:#c4575f"></p></div>
+<div id="app" hidden>
+<div class="row" style="justify-content:space-between"><h1>Hi Isabella! 💖</h1><div class="row"><a href="index.html" style="color:var(--brown)">View my website</a><button class="soft" onclick="sb.auth.signOut().then(()=>location.reload())">Log out</button></div></div>
+<nav id="tabs"></nav><div id="v"></div></div></div>
+<dialog id="dlg"></dialog><div id="toast"></div>
+<script>
+const SB_URL='PASTE_SUPABASE_URL_HERE',SB_KEY='PASTE_SUPABASE_ANON_KEY_HERE';
+const sb=supabase.createClient(SB_URL,SB_KEY),$=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const toast=m=>{const t=$('#toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2600)};
+const dlg=h=>{$('#dlg').innerHTML=h;$('#dlg').showModal()},closeD=()=>$('#dlg').close();
+const money=n=>'$'+(+n).toFixed(2).replace(/\.00$/,'');
+const SHAPES=['Almond','Stiletto','Coffin','Square','Round'],CATS=['Almond','Stiletto','Coffin','Square','Round','French tips','Blooming gel','Cheetah print','Chrome','Seasonal','Other'];
+const TABS=[['nails','💅 My Nails'],['gallery','📸 Gallery'],['codes','🏷️ Discount Codes'],['orders','📦 Orders'],['msgs','💌 Messages']];
+let cur='nails',C={};
+async function login(){$('#err').textContent='';const {error}=await sb.auth.signInWithPassword({email:$('#u').value.trim().toLowerCase()+'@bellz.app',password:$('#p').value});
+ if(error)$('#err').textContent='Hmm, that username or password didn’t work. Try again!';else start()}
+$('#p').addEventListener('keydown',e=>e.key=='Enter'&&login());
+async function start(){const {data}=await sb.auth.getSession();if(!data.session)return;$('#login').hidden=true;$('#app').hidden=false;tabs();show(cur)}
+async function tabs(){const [o,m]=await Promise.all([sb.from('orders').select('id',{count:'exact',head:true}).eq('status','new'),sb.from('messages').select('id',{count:'exact',head:true}).eq('read',false)]);
+ const n={orders:o.count,msgs:m.count};$('#tabs').innerHTML=TABS.map(([k,l])=>`<button class="${k==cur?'cur':''}" onclick="show('${k}')">${l}${n[k]?`<span class="badge">${n[k]}</span>`:''}</button>`).join('')}
+function show(k){cur=k;tabs();({nails,gallery,codes,orders,msgs})[k]()}
+async function up(f){const p=Date.now()+'-'+f.name.replace(/[^\w.]/g,'_');const {error}=await sb.storage.from('images').upload(p,f);if(error)throw error;return sb.storage.from('images').getPublicUrl(p).data.publicUrl}
+const fail=e=>toast('Oops, something went wrong: '+(e.message||e));
+
+async function nails(){const {data,error}=await sb.from('products').select('*').order('sort').order('created_at');if(error)return fail(error);C={};
+ $('#v').innerHTML='<button class="big" onclick="nailForm()">➕ Add new nails</button>'+(data.length?'':'<div class="box">No nails yet. Tap the button above to add your first set!</div>')+data.map(p=>{C[p.id]=p;return `<div class="box item"><div class="row">${p.image_url?`<img class="thumb" src="${esc(p.image_url)}">`:`<div class="thumb" style="background:${esc(p.color)}"></div>`}<div><b>${esc(p.name)}</b><br><span class="muted">${esc(p.shape)} · ${money(p.price)}</span></div></div>
+ <div class="row"><button class="${p.active?'on':'soft'}" onclick="flip('${p.id}')">${p.active?'✅ Showing':'🙈 Hidden'}</button><button class="soft" onclick="nailForm('${p.id}')">✏️ Edit</button><button class="red" onclick="del('products','${p.id}','nails')">🗑️</button></div></div>`}).join('')}
+async function flip(id){await sb.from('products').update({active:!C[id].active}).eq('id',id);nails()}
+function nailForm(id){const p=id?C[id]:{name:'',shape:'Almond',color:'#f3b8c4',description:'',price:'',image_url:''};
+ dlg(`<h2>${id?'Edit nails':'Add new nails'} 💅</h2><label>Name<input id="f_n" value="${esc(p.name)}" placeholder="Strawberry Milk"></label>
+ <label>Shape<select id="f_s">${SHAPES.map(s=>`<option ${s==p.shape?'selected':''}>${s}</option>`)}</select></label>
+ <label>Price ($)<input id="f_p" type="number" step="0.01" min="0" value="${p.price}"></label>
+ <label>Description<textarea id="f_d" rows="3" placeholder="Soft pink with tiny hearts">${esc(p.description)}</textarea></label>
+ <label>Main color (used if there’s no photo)<input id="f_c" type="color" value="${p.color}"></label>
+ <label>Photo${p.image_url?' (pick a new one to change it)':''}<input id="f_i" type="file" accept="image/*"></label>
+ <div class="row"><button class="big" onclick="saveNail('${id||''}')">Save ✨</button><button class="big soft" onclick="closeD()">Cancel</button></div>`)}
+async function saveNail(id){try{const name=$('#f_n').value.trim(),price=$('#f_p').value;if(!name||price==='')return toast('Please add a name and a price 💕');
+ const row={name,shape:$('#f_s').value,price:+price,description:$('#f_d').value,color:$('#f_c').value};const f=$('#f_i').files[0];if(f){toast('Uploading photo…');row.image_url=await up(f)}
+ const r=id?await sb.from('products').update(row).eq('id',id):await sb.from('products').insert(row);if(r.error)throw r.error;closeD();toast('Saved! ✨');nails()}catch(e){fail(e)}}
+async function del(t,id,back){if(!confirm('Are you sure you want to delete this? It can’t be undone.'))return;const r=await sb.from(t).delete().eq('id',id);if(r.error)return fail(r.error);toast('Deleted');show(back)}
+
+async function gallery(){const {data,error}=await sb.from('gallery').select('*').order('created_at',{ascending:false});if(error)return fail(error);
+ $('#v').innerHTML=`<div class="box"><h2>Add photos 📸</h2><label>What kind of nails are these?<select id="gc">${CATS.map(c=>`<option>${c}</option>`)}</select></label><label>Pick your photos (you can pick lots!)<input id="gf" type="file" accept="image/*" multiple></label><button class="big" onclick="addPics()">Upload ⬆️</button></div>`+(data.length?`<div class="g">${data.map(g=>`<div><img src="${esc(g.image_url)}" alt=""><button class="red" onclick="delPic('${g.id}','${esc(g.image_url)}')">🗑️</button><span class="muted">${esc(g.category)}</span></div>`).join('')}</div>`:'<div class="box">No photos yet.</div>')}
+async function addPics(){const fs=[...$('#gf').files];if(!fs.length)return toast('Pick some photos first 💕');try{for(let i=0;i<fs.length;i++){toast(`Uploading ${i+1} of ${fs.length}…`);const u=await up(fs[i]);const r=await sb.from('gallery').insert({image_url:u,category:$('#gc').value});if(r.error)throw r.error}toast('Photos added! 🎉');gallery()}catch(e){fail(e)}}
+async function delPic(id,url){if(!confirm('Delete this photo?'))return;const p=url.split('/images/')[1];if(p)await sb.storage.from('images').remove([decodeURIComponent(p)]);await sb.from('gallery').delete().eq('id',id);toast('Deleted');gallery()}
+
+async function codes(){const {data,error}=await sb.from('discount_codes').select('*').order('created_at',{ascending:false});if(error)return fail(error);C={};
+ $('#v').innerHTML=`<div class="box"><h2>Make a discount code 🏷️</h2><label>Code (like BELLZ10)<input id="dc" style="text-transform:uppercase"></label><label>Percent off<input id="dp" type="number" min="1" max="100" placeholder="10"></label><button class="big" onclick="addCode()">Add code</button></div>`+data.map(c=>{C[c.id]=c;return `<div class="box item"><div><b>${esc(c.code)}</b> <span class="muted">${c.percent}% off</span></div><div class="row"><button class="${c.active?'on':'soft'}" onclick="flipCode('${c.id}')">${c.active?'✅ On':'⏸️ Off'}</button><button class="red" onclick="del('discount_codes','${c.id}','codes')">🗑️</button></div></div>`}).join('')}
+async function addCode(){const code=$('#dc').value.trim().toUpperCase().replace(/\s/g,''),percent=+$('#dp').value;if(!code||!(percent>=1&&percent<=100))return toast('Add a code and a percent from 1 to 100 💕');
+ const r=await sb.from('discount_codes').insert({code,percent});if(r.error)return fail(r.error.code=='23505'?{message:'That code already exists!'}:r.error);toast('Code added! 🎉');codes()}
+async function flipCode(id){await sb.from('discount_codes').update({active:!C[id].active}).eq('id',id);codes()}
+
+const ST=[['new','🆕 New'],['making','🛠️ Making it'],['shipped','📬 Shipped'],['done','✅ Done']];
+async function orders(){const {data,error}=await sb.from('orders').select('*').order('created_at',{ascending:false});if(error)return fail(error);
+ $('#v').innerHTML=data.length?data.map(o=>`<div class="box"><div class="item"><div><b>${esc(o.customer_name||'Customer')}</b> <span class="muted">${new Date(o.created_at).toLocaleDateString()} · ${money(o.total)}${o.discount_code?' · code '+esc(o.discount_code):''}</span><br>${(o.items||[]).map(i=>esc(i.n)+' × '+i.q).join(', ')}<br><span class="muted">${esc(o.email||'')}</span></div>
+ <select style="width:auto" onchange="setSt('${o.id}',this.value)">${ST.map(([k,l])=>`<option value="${k}" ${k==o.status?'selected':''}>${l}</option>`)}</select></div>
+ ${o.hand_photo_url?`<p><a href="${esc(o.hand_photo_url)}" target="_blank">📷 See sizing photo</a></p>`:''}
+ <label>Notes just for me<textarea rows="2" onchange="setNote('${o.id}',this.value)">${esc(o.notes||'')}</textarea></label></div>`).join(''):'<div class="box"><h2>No orders yet 📦</h2><p class="muted">When someone orders, it will show up here and you’ll see a number on this tab.</p></div>'}
+async function setSt(id,s){const r=await sb.from('orders').update({status:s}).eq('id',id);r.error?fail(r.error):(toast('Updated! ✨'),tabs())}
+async function setNote(id,n){const r=await sb.from('orders').update({notes:n}).eq('id',id);r.error?fail(r.error):toast('Note saved 📝')}
+
+async function msgs(){const {data,error}=await sb.from('messages').select('*').order('created_at',{ascending:false});if(error)return fail(error);
+ $('#v').innerHTML=data.length?data.map(m=>`<div class="box" style="${m.read?'opacity:.7':''}"><b>${esc(m.name)}</b> <span class="muted">${esc(m.email)} · ${new Date(m.created_at).toLocaleDateString()}</span><p>${esc(m.message)}</p><div class="row"><a href="mailto:${esc(m.email)}?subject=${encodeURIComponent('Re: Bellz Beauty & Nailz')}"><button>✉️ Reply</button></a>${m.read?'':`<button class="soft" onclick="mark('${m.id}')">Mark as read</button>`}<button class="red" onclick="del('messages','${m.id}','msgs')">🗑️</button></div></div>`).join(''):'<div class="box">No messages yet 💌</div>'}
+async function mark(id){await sb.from('messages').update({read:true}).eq('id',id);msgs();tabs()}
+start();
+</script></body></html>
