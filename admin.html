@@ -35,7 +35,7 @@ dialog{border:3px solid var(--pink-d);border-radius:24px;background:var(--bg);co
 <nav id="tabs"></nav><div id="v"></div></div></div>
 <dialog id="dlg"></dialog><div id="toast"></div>
 <script>
-const SB_URL='PASTE_SUPABASE_URL_HERE',SB_KEY='PASTE_SUPABASE_ANON_KEY_HERE';
+const SB_URL='https://ckmayukmgutslrgpxgkl.supabase.co',SB_KEY='sb_publishable_yc6-s1GioMD69mm8xcEeDA_3qgNjXAM';
 const sb=supabase.createClient(SB_URL,SB_KEY),$=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const toast=m=>{const t=$('#toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2600)};
