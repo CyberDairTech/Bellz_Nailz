@@ -41,7 +41,7 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 const toast=m=>{const t=$('#toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2600)};
 const dlg=h=>{$('#dlg').innerHTML=h;$('#dlg').showModal()},closeD=()=>$('#dlg').close();
 const money=n=>'$'+(+n).toFixed(2).replace(/\.00$/,'');
-const SHAPES=['Almond','Stiletto','Coffin','Square','Round'],CATS=['Almond','Stiletto','Coffin','Square','Round','French tips','Blooming gel','Cheetah print','Chrome','Seasonal','Other'];
+const SHAPES=['Almond','Stiletto','Coffin','Square','Round'],CATS=['Almond','Stiletto','Coffin','Square','Round','French tips','Blooming gel','Cheetah print','Tortoise','Chrome','Seasonal','Other'];
 const TABS=[['nails','💅 My Nails'],['gallery','📸 Gallery'],['codes','🏷️ Discount Codes'],['orders','📦 Orders'],['msgs','💌 Messages'],['settings','⚙️ Settings']];
 let cur='nails',C={};
 async function login(){$('#err').textContent='';let u=$('#u').value.trim().toLowerCase();if(!u.includes('@'))u+='@bellz.app';
