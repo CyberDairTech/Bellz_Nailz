@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Bellz Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js"></script>
 <style>
 :root{--bg:#fbeee9;--card:#fff8f4;--pink:#f8e1e3;--pink-d:#f0c8ce;--brown:#4a2e24;--apricot:#e8b48c;--muted:#7d5f52}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--brown);font:700 17px/1.5 Nunito,system-ui,sans-serif}
@@ -44,8 +44,9 @@ const money=n=>'$'+(+n).toFixed(2).replace(/\.00$/,'');
 const SHAPES=['Almond','Stiletto','Coffin','Square','Round'],CATS=['Almond','Stiletto','Coffin','Square','Round','French tips','Blooming gel','Cheetah print','Chrome','Seasonal','Other'];
 const TABS=[['nails','💅 My Nails'],['gallery','📸 Gallery'],['codes','🏷️ Discount Codes'],['orders','📦 Orders'],['msgs','💌 Messages'],['settings','⚙️ Settings']];
 let cur='nails',C={};
-async function login(){$('#err').textContent='';const {error}=await sb.auth.signInWithPassword({email:$('#u').value.trim().toLowerCase()+'@bellz.app',password:$('#p').value});
- if(error)$('#err').textContent='Hmm, that username or password didn’t work. Try again!';else start()}
+async function login(){$('#err').textContent='';let u=$('#u').value.trim().toLowerCase();if(!u.includes('@'))u+='@bellz.app';
+ const {error}=await sb.auth.signInWithPassword({email:u,password:$('#p').value});
+ if(error){console.error(error);$('#err').textContent='Hmm, that didn’t work. ('+error.message+')'}else start()}
 $('#p').addEventListener('keydown',e=>e.key=='Enter'&&login());
 async function start(){const {data}=await sb.auth.getSession();if(!data.session)return;$('#login').hidden=true;$('#app').hidden=false;tabs();show(cur)}
 async function tabs(){const [o,m]=await Promise.all([sb.from('orders').select('id',{count:'exact',head:true}).eq('status','new'),sb.from('messages').select('id',{count:'exact',head:true}).eq('read',false)]);
